@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 
 const formatThaiDate = (dateStr) => {
@@ -32,9 +32,22 @@ const StatusBadge = ({ dueDate }) => {
 const emptyForm = { name: "", principal: "", rate: "", loanDate: "2026-04-28", dueDate: "", note: "" };
 
 export default function LoanTracker() {
-  const [loans, setLoans] = useState([
-    { id: 1, name: "สมชาย ใจดี", principal: 10000, rate: 5, loanDate: "2026-04-28", dueDate: "2026-07-28", note: "กู้ฉุกเฉิน" }
-  ]);
+  // Initialize from localStorage or use default data
+  const [loans, setLoans] = useState(() => {
+    try {
+      const saved = localStorage.getItem('rin-money-loans');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load from localStorage:', e);
+    }
+    // Default data
+    return [
+      { id: 1, name: "สมชาย ใจดี", principal: 10000, rate: 5, loanDate: "2026-04-28", dueDate: "2026-07-28", note: "กู้ฉุกเฉิน" }
+    ];
+  });
+
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -42,6 +55,15 @@ export default function LoanTracker() {
   const [sortKey, setSortKey] = useState("loanDate");
   const [filterStatus, setFilterStatus] = useState("all");
   const [exporting, setExporting] = useState(false);
+
+  // Save to localStorage whenever loans change
+  useEffect(() => {
+    try {
+      localStorage.setItem('rin-money-loans', JSON.stringify(loans));
+    } catch (e) {
+      console.error('Failed to save to localStorage:', e);
+    }
+  }, [loans]);
 
   const getStatus = (dueDate) => {
     if (!dueDate) return "none";
@@ -413,7 +435,7 @@ export default function LoanTracker() {
             </div>
             {form.principal && form.rate && (
               <div className="preview-box">
-                <div className="preview-label">ยอดที่ต้องคืน</div>
+                <div className="preview-label">ยอดที��ต้องคืน</div>
                 <div className="preview-total">฿{previewTotal.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</div>
                 <div className="preview-detail">เงินต้น ฿{Number(form.principal).toLocaleString()} + ดอก ฿{previewInterest.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</div>
               </div>
